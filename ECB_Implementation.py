@@ -17,14 +17,6 @@ def ecbDecrypt(message):
     decipheredMessage = cipher.decrypt(message)
     return decipheredMessage
 
-def submit(message : str) -> str:
-    PREPEND_MESSAGE = "userid=456;userdata="
-    APPEND_MESSAGE = ";session-id=31337"
-    message = PREPEND_MESSAGE + message + APPEND_MESSAGE
-
-def verify(message : str) -> bool:
-    pass
-
 
 try:
     f = open(ecbFileName, "br")
@@ -36,5 +28,17 @@ try:
     encryptedFile.write(header)
     encryptedFile.write(encryptedContents)
     encryptedFile.close()
+
+    encryptedFile = open("encrypted_mustang.bmp", "br")
+    contents = encryptedFile.read()
+    encryptedFile.close()
+
+    # Decrypt the image
+    header = contents[:54]
+    decryptedContents = ecbDecrypt(contents[54:])
+    decryptedFile = open("decrypted_mustang.bmp", "bw+")
+    decryptedFile.write(header)
+    decryptedFile.write(decryptedContents)
+    decryptedFile.close()
 except FileNotFoundError:
     print("File not found")

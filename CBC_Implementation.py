@@ -4,24 +4,67 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
 
-data = b"secret"
+cbcFileName = "cp-logo.bmp"
+
 key = get_random_bytes(16)
 cipher = AES.new(key, AES.MODE_ECB)
-ct_bytes = cipher.encrypt(pad(data, AES.block_size))
-iv = b64encode(cipher.iv).decode('utf-8')
-ct = b64encode(ct_bytes).decode('utf-8')
-result = json.dumps({'iv':iv, 'ciphertext':ct})
-print(result)
-'{"iv": "bWRHdzkzVDFJbWNBY0EwSmQ1UXFuQT09", "ciphertext": "VDdxQVo3TFFCbXIzcGpYa1lJbFFZQT09"}'
+iv = get_random_bytes(16)
+
+def xor(one : bytes, two : bytes) -> bytes:
+    one_xor_two = bytearray(a ^ b for (a, b) in zip(one, two))
+    return one_xor_two
+
+def cbcEncrypt(message : bytes):
+    vector = iv
+    message = pad(message, AES.block_size)
+    blocks = len(message) // AES.block_size
+    cipherMessage = bytearray()
+    for i in range(0, blocks):
+        lowerBound = i * AES.block_size
+        upperbound = lowerBound + AES.block_size
+        block = message[lowerBound : upperbound]
+        input = xor(block, vector)
+        cipherBlock = cipher.encrypt(input)
+        cipherMessage.extend(cipherBlock)
+        vector = cipherBlock
+    return cipherMessage
+
+def cbcDecrypt(encryption):
+    vector = iv
+    blocks = len(encryption) // AES.block_size
+    message = bytearray()
+    for i in range(blocks):
+        lowerBound = i * AES.block_size
+        upperbound = lowerBound + AES.block_size
+        cipheredBlock = encryption[lowerBound : upperbound]
+        partiallyDecryptedBlock = cipher.decrypt(cipheredBlock)
+        decryptedBlock = xor(partiallyDecryptedBlock, vector)
+        message.extend(decryptedBlock)
+        vector = cipheredBlock
+    return message
 
 
+f = open(cbcFileName, "br")
+contents = f.read()
+header = contents[:54]
+f.close()
 
-try:
-    b64 = json.loads(json_input)
-    iv = b64decode(b64['iv'])
-    ct = b64decode(b64['ciphertext'])
-    cipher = AES.new(key, AES.MODE_CBC, iv)
-    pt = unpad(cipher.decrypt(ct), AES.block_size)
-    print("The message was: ", pt)
-except (ValueError, KeyError):
-    print("Incorrect decryption")
+# Encrypt the image
+encryptedContents = cbcEncrypt(contents[54:])
+encryptedFile = open("encrypted_cp_logo.bmp", "bw+")
+encryptedFile.write(header)
+encryptedFile.write(encryptedContents)
+encryptedFile.close()
+
+encryptedFile = open("encrypted_cp_logo.bmp", "br")
+contents = encryptedFile.read()
+encryptedFile.close()
+
+# Decrypt the image
+header = contents[:54]
+decryptedContents = cbcDecrypt(contents[54:])
+decryptedFile = open("decrypted_cp_logo.bmp", "bw+")
+decryptedFile.write(header)
+decryptedFile.write(decryptedContents)
+decryptedFile.close()
+
