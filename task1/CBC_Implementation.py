@@ -4,7 +4,7 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
 
-cbcFileName = "cp-logo.bmp"
+cbcFileName = "task1/cp-logo.bmp"
 
 key = get_random_bytes(16)
 cipher = AES.new(key, AES.MODE_ECB)
@@ -51,20 +51,22 @@ f.close()
 
 # Encrypt the image
 encryptedContents = cbcEncrypt(contents[54:])
-encryptedFile = open("encrypted_cp_logo.bmp", "bw+")
+encryptedFile = open("task1/encrypted_cp_logo.bmp", "bw+")
 encryptedFile.write(header)
 encryptedFile.write(encryptedContents)
 encryptedFile.close()
 
-encryptedFile = open("encrypted_cp_logo.bmp", "br")
+encryptedFile = open("task1/encrypted_cp_logo.bmp", "br")
 contents = encryptedFile.read()
 encryptedFile.close()
 
 # Decrypt the image
 header = contents[:54]
 decryptedContents = cbcDecrypt(contents[54:])
-decryptedFile = open("decrypted_cp_logo.bmp", "bw+")
+decryptedFile = open("task1/decrypted_cp_logo.bmp", "bw+")
 decryptedFile.write(header)
 decryptedFile.write(decryptedContents)
 decryptedFile.close()
+
+
 

@@ -3,7 +3,7 @@ from base64 import b64encode
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
-ecbFileName = "mustang.bmp"
+ecbFileName = "task1/mustang.bmp"
 
 key = get_random_bytes(16)
 cipher = AES.new(key, AES.MODE_ECB)
@@ -17,14 +17,6 @@ def ecbDecrypt(message):
     decipheredMessage = cipher.decrypt(message)
     return decipheredMessage
 
-def submit(message : str) -> str:
-    PREPEND_MESSAGE = "userid=456;userdata="
-    APPEND_MESSAGE = ";session-id=31337"
-    message = PREPEND_MESSAGE + message + APPEND_MESSAGE
-
-def verify(message : str) -> bool:
-    pass
-
 
 try:
     f = open(ecbFileName, "br")
@@ -32,18 +24,21 @@ try:
     header = contents[:54]
     f.close()
     encryptedContents = ecbEncrypt(contents[54:])
-    encryptedFile = open("encrypted_mustang.bmp", "bw+")
+    encryptedFile = open("task1/encrypted_mustang.bmp", "bw+")
     encryptedFile.write(header)
     encryptedFile.write(encryptedContents)
     encryptedFile.close()
 
-    myMessage = "my message".encode('utf-8')
-    print("Message: " + myMessage.decode('utf-8'))
-    eM = ecbEncrypt(myMessage)
-    print(eM)
-    dM = ecbDecrypt(eM)
-    print("Deciphered text: " + dM.decode('utf-8'))
+    encryptedFile = open("task1/encrypted_mustang.bmp", "br")
+    contents = encryptedFile.read()
+    encryptedFile.close()
 
-
+    # Decrypt the image
+    header = contents[:54]
+    decryptedContents = ecbDecrypt(contents[54:])
+    decryptedFile = open("task1/decrypted_mustang.bmp", "bw+")
+    decryptedFile.write(header)
+    decryptedFile.write(decryptedContents)
+    decryptedFile.close()
 except FileNotFoundError:
     print("File not found")
