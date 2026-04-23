@@ -38,3 +38,26 @@ def cbcDecrypt(encryption):
         message.extend(decryptedBlock)
         vector = cipheredBlock
     return message
+
+
+def submit(user_string):
+    
+    encode1 = '%3B'
+    encode2 = '%3D'
+    new_string = "userid=456;userdata=" + user_string + ";session-id=31337"
+    final_string = ''
+    
+    for i in range(len(new_string)):
+        if new_string[i] == ';':
+            final_string = final_string + encode1
+        elif new_string[i] == '=':
+            final_string = final_string + encode2
+        else:
+            final_string = final_string + user_string[i]
+        
+
+    my_string_in_bytes = final_string.encode('utf-8')
+
+    Encrypted_String = cbcEncrypt(my_string_in_bytes)
+
+    return Encrypted_String
