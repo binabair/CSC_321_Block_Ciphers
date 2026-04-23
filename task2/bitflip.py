@@ -1,3 +1,5 @@
+from encodings.utf_8 import decode
+
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
@@ -41,6 +43,7 @@ def cbcDecrypt(encryption):
 
 def verify(encryptedMessage):
     message = cbcDecrypt(encryptedMessage)
+    message = decode(message)
     targetStr = ";admin=true;"
     targetLen = len(targetStr)
     for i in range(len(message) - targetLen):
