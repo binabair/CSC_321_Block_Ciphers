@@ -65,7 +65,7 @@ def submit(user_string):
         elif new_string[i] == '=':
             final_string = final_string + encode2
         else:
-            final_string = final_string + user_string[i]
+            final_string = final_string + new_string[i]
         
 
     my_string_in_bytes = final_string.encode('utf-8')
