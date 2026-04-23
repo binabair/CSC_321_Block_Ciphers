@@ -38,3 +38,12 @@ def cbcDecrypt(encryption):
         message.extend(decryptedBlock)
         vector = cipheredBlock
     return message
+
+def verify(encryptedMessage):
+    message = cbcDecrypt(encryptedMessage)
+    targetStr = ";admin=true;"
+    targetLen = len(targetStr)
+    for i in range(len(message) - targetLen):
+        if message[i:i + targetLen] == targetStr:
+            return True
+    return False
