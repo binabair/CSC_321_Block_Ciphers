@@ -43,7 +43,7 @@ def cbcDecrypt(encryption):
 
 def verify(encryptedMessage):
     message = cbcDecrypt(encryptedMessage)
-    message = decode(message)
+    message = decode(message)[0]
     targetStr = ";admin=true;"
     targetLen = len(targetStr)
     for i in range(len(message) - targetLen):
@@ -57,15 +57,15 @@ def submit(user_string):
     encode1 = '%3B'
     encode2 = '%3D'
     new_string = "userid=456;userdata=" + user_string + ";session-id=31337"
-    final_string = ''
+    final_string = new_string
     
-    for i in range(len(new_string)):
-        if new_string[i] == ';':
-            final_string = final_string + encode1
-        elif new_string[i] == '=':
-            final_string = final_string + encode2
-        else:
-            final_string = final_string + new_string[i]
+    # for i in range(len(new_string)):
+    #     if new_string[i] == ';':
+    #         final_string = final_string + encode1
+    #     elif new_string[i] == '=':
+    #         final_string = final_string + encode2
+    #     else:
+    #         final_string = final_string + new_string[i]
         
 
     my_string_in_bytes = final_string.encode('utf-8')
@@ -73,3 +73,7 @@ def submit(user_string):
     Encrypted_String = cbcEncrypt(my_string_in_bytes)
 
     return Encrypted_String
+
+encryptedMessage = submit("You’re the man now, dog;admin=true;")
+print(encryptedMessage)
+print("verified: " + verify(encryptedMessage).__str__())
