@@ -1,5 +1,3 @@
-from encodings.utf_8 import decode
-
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
@@ -41,32 +39,21 @@ def cbcDecrypt(encryption):
         vector = cipheredBlock
     return message
 
-def verify(encryptedMessage):
-    message = cbcDecrypt(encryptedMessage)
-    message = decode(message)
-    targetStr = ";admin=true;"
-    targetLen = len(targetStr)
-    for i in range(len(message) - targetLen):
-        if message[i:i + targetLen] == targetStr:
-            return True
-    return False
-
 
 def submit(user_string):
     
     encode1 = '%3B'
     encode2 = '%3D'
-    new_string = "userid=456;userdata=" + user_string + ";session-id=31337"
-    final_string = ''
-    
-    for i in range(len(new_string)):
-        if new_string[i] == ';':
-            final_string = final_string + encode1
-        elif new_string[i] == '=':
-            final_string = final_string + encode2
+    new_string = ""
+    for i in range(len(user_string)):
+        if user_string[i] == ';':
+            new_string = new_string + encode1
+        elif user_string[i] == '=':
+            new_string = new_string + encode2
         else:
-            final_string = final_string + new_string[i]
+            new_string = new_string + user_string[i]
         
+    final_string = "userid=456;userdata=" + new_string + ";session-id=31337"
 
     my_string_in_bytes = final_string.encode('utf-8')
 
