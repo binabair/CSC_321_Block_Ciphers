@@ -1,4 +1,3 @@
-
 import json
 from base64 import b64encode
 from Crypto.Cipher import AES
@@ -23,7 +22,6 @@ class Person:
     k: int
 
 
-
     def generateX(self):
         self.x = random.randint(1,self.q)
 
@@ -39,16 +37,14 @@ class Person:
     def computes_Y(self):
         self.y = pow(self.alpha, self.x, self.q)
         
-    
-    def intercept_Y(self, person):
-        person.y = self.q
+    def intercept_Y(self, person ):
+        person.y = person.q
 
     def receive_Y(self, person):
-        self.s = pow(person.y, self.x, self.q)
+        self.s = pow(self.y, self.x, self.q)
         self.k = SHA256.new(bytes(self.s)).digest()
         self.cipher = AES.new(self.k, AES.MODE_ECB)
         
-
 
     def cbcEncrypt(self, message: bytes):
         vector = iv
@@ -80,17 +76,13 @@ class Person:
         return message
 
 
-
 Alice = Person()
 Bob = Person()
 Mallory = Person()
 Alice.q = 37
 Alice.alpha = 5
-
-Mallory.q = 37
-
 Alice.send_q_a(Bob)
-
+Bob.send_q_a(Alice)
 
 Alice.computes_Y()
 Bob.computes_Y()
@@ -101,18 +93,13 @@ Mallory.intercept_Y(Alice)
 Alice.receive_Y(Bob)
 Bob.receive_Y(Alice)
 
-
-
-
-
-
 alices_message = "Hi Bob!"
 alices_encrypted_message = Alice.cbcEncrypt(alices_message.encode())
 alices_decrypted_message = Bob.cbcDecrypt(alices_encrypted_message).decode()
 print("Bob received: " + alices_decrypted_message)
 
 bobs_message = "Hi Alice!"
-bobs_encrypted_message = Bob.cbcEncrypt(alices_message.encode())
+bobs_encrypted_message = Bob.cbcEncrypt(bobs_message.encode())
 bobs_decrypted_message =Alice.cbcDecrypt(bobs_encrypted_message).decode()
 print("Alice received: " + bobs_decrypted_message)
 
