@@ -6,7 +6,7 @@ from Crypto.Util.Padding import pad
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol import DH
 from Crypto.Random import random
-
+from Crypto.Hash import SHA256
 
 iv = get_random_bytes(16)
 
@@ -18,6 +18,10 @@ class Person:
     q : int
     alpha : int
     x : int
+    y: int
+    s: int
+    k: int
+
 
 
     def generateX(self):
@@ -26,16 +30,24 @@ class Person:
     def send_q_a(self, bob):
         bob.receive_q_a(self.q, self.alpha)
         self.generateX()
+
     def receive_q_a(self, q, a):
         self.q = q
         self.alpha = a
         self.generateX()
-    def computes(self):
-        y = (self.alpha**self.x) % self.q
-        return y 
+
+    def computes_Y(self):
+        self.y = pow(self.alpha, self.x, self.q)
+        
     
-    def send_q(self, Person, new_q: int ):
-        Person.q = new_q
+    def intercept_Y(self, person ):
+        person.y = person.q
+
+    def receive_Y(self, person):
+        self.s = pow(self.yOther, self.x, self.q)
+        self.k = SHA256.new(bytes(self.s)).digest()
+        self.cipher = AES.new(self.k, AES.MODE_ECB)
+        
 
 
     def cbcEncrypt(self, message: bytes):
@@ -77,17 +89,19 @@ Alice.alpha = 5
 Alice.send_q_a(Bob)
 Alice.send_q_a(Mallory)
 
-Ya = Alice.computes()
-Yb = Bob.computes
+Alice.computes_Y()
+Bob.computes_Y()
 
-Mallory.send_q(Bob, Ya)
-Mallory.send_q(Alice, Yb)
+Mallory.intercept_Y(Bob)
+Mallory.intercept_Y(Alice)
 
-sa = Alice.computes()
-sb = Bob.computes()
+Alice.receive_Y(Bob)
+Bob.receive_Y(Alice)
 
-ka = f"SHA256{sa}"
-kb = f"SHA256{sb}"
+
+
+
+
 
 alices_message = "Hi Bob!"
 alices_encrypted_message = Alice.cbcEncrypt(alices_message.encode())
