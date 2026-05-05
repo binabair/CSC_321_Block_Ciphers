@@ -44,7 +44,7 @@ class Person:
         person.y = person.q
 
     def receive_Y(self, person):
-        self.s = pow(self.yOther, self.x, self.q)
+        self.s = pow(self.y, self.x, self.q)
         self.k = SHA256.new(bytes(self.s)).digest()
         self.cipher = AES.new(self.k, AES.MODE_ECB)
         
