@@ -40,11 +40,11 @@ class Person:
         self.y = pow(self.alpha, self.x, self.q)
         
     
-    def intercept_Y(self, person ):
-        person.y = person.q
+    def intercept_Y(self, person):
+        person.y = self.q
 
     def receive_Y(self, person):
-        self.s = pow(self.y, self.x, self.q)
+        self.s = pow(person.y, self.x, self.q)
         self.k = SHA256.new(bytes(self.s)).digest()
         self.cipher = AES.new(self.k, AES.MODE_ECB)
         
@@ -86,8 +86,11 @@ Bob = Person()
 Mallory = Person()
 Alice.q = 37
 Alice.alpha = 5
+
+Mallory.q = 37
+
 Alice.send_q_a(Bob)
-Alice.send_q_a(Mallory)
+
 
 Alice.computes_Y()
 Bob.computes_Y()
