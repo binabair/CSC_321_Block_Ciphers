@@ -1,18 +1,33 @@
+from random import Random
+
 from Crypto.PublicKey import RSA
 import Crypto.Random as random
 import math
+import Crypto.Random
 
+
+
+def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+def generate_random_prime():
+    while True:
+        num = int(random.get_random_bytes(256))
+        if is_prime(num):
+            return num
 
 #Feel free to use your cryptographic library’s interface for generating large primes,
 # but implement the rest-including computing the multiplicative inverse - yourself.
 
 e = 65537
-RSAkey = RSA.generate(2048, e=e)
-print(RSAkey.q)
-print(RSAkey.p)
-print(RSAkey.n)
-print(RSAkey.e)
-print(RSAkey.d)
+p = generate_random_prime()
+q = generate_random_prime()
+
 
 
 def encrypt(message : str):
@@ -56,44 +71,6 @@ class Person:
         self.generateX()
         self.generateY()
 
-    def sendY(self, other : Person):
-        other.receive_y(self.y)
-
-    def receive_y(self, y):
-        self.yOther = y
-        self.s = pow(self.yOther, self.x, self.q)
-        self.k = SHA256.new(bytes(self.s)).digest()
-        self.cipher = AES.new(self.k, AES.MODE_ECB)
-
-
-    def cbcEncrypt(self, message: bytes):
-        vector = iv
-        message = pad(message, AES.block_size)
-        blocks = len(message) // AES.block_size
-        cipherMessage = bytearray()
-        for i in range(0, blocks):
-            lowerBound = i * AES.block_size
-            upperbound = lowerBound + AES.block_size
-            block = message[lowerBound: upperbound]
-            input = xor(block, vector)
-            cipherBlock = self.cipher.encrypt(input)
-            cipherMessage.extend(cipherBlock)
-            vector = cipherBlock
-        return cipherMessage
-
-    def cbcDecrypt(self, encryption):
-        vector = iv
-        blocks = len(encryption) // AES.block_size
-        message = bytearray()
-        for i in range(blocks):
-            lowerBound = i * AES.block_size
-            upperbound = lowerBound + AES.block_size
-            cipheredBlock = encryption[lowerBound: upperbound]
-            partiallyDecryptedBlock = self.cipher.decrypt(cipheredBlock)
-            decryptedBlock = xor(partiallyDecryptedBlock, vector)
-            message.extend(decryptedBlock)
-            vector = cipheredBlock
-        return message
 
 
 alice = Person()
