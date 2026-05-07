@@ -4,22 +4,7 @@ from Crypto.PublicKey import RSA
 import Crypto.Random as random
 import math
 import Crypto.Random
-
-
-
-def is_prime(n):
-    if n < 2:
-        return False
-    for i in range(2, int(math.sqrt(n)) + 1):
-        if n % i == 0:
-            return False
-    return True
-
-def generate_random_prime():
-    while True:
-        num = int(random.get_random_bytes(256))
-        if is_prime(num):
-            return num
+import Crypto.Util as util
 
 def mod_inverse(a, n):
     t, newt = 0, 1
@@ -42,8 +27,8 @@ def mod_inverse(a, n):
 # but implement the rest-including computing the multiplicative inverse - yourself.
 
 e = 65537
-p = generate_random_prime()
-q = generate_random_prime()
+p = util.number.getPrime(2048)
+q = util.number.getPrime(2048)
 n = p * q
 d = mod_inverse(e, (p - 1) * (q - 1))
 
