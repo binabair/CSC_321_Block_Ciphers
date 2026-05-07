@@ -21,22 +21,42 @@ def generate_random_prime():
         if is_prime(num):
             return num
 
+def mod_inverse(a, n):
+    t, newt = 0, 1
+    r, newr = n, a
+
+    while newr:
+        quotient = r // newr  # floor division
+        t, newt = newt, t - quotient * newt
+        r, newr = newr, r - quotient * newr
+
+    if r > 1:
+        return None  # no solution
+
+    if t < 0:
+        t = t + n
+
+    return t
+
 #Feel free to use your cryptographic library’s interface for generating large primes,
 # but implement the rest-including computing the multiplicative inverse - yourself.
 
 e = 65537
 p = generate_random_prime()
 q = generate_random_prime()
+n = p * q
+d = mod_inverse(e, (p - 1) * (q - 1))
+
 
 
 
 def encrypt(message : str):
     message = int.from_bytes(message.encode(), byteorder='big')
-    encrypted_message = pow(message, RSAkey.e, RSAkey.n)
+    encrypted_message = pow(message, e, n)
     return encrypted_message
 
 def decrypt(encrpyted_message : int):
-    message = pow(encrpyted_message, RSAkey.d, RSAkey.n)
+    message = pow(encrpyted_message, d, n)
     length = math.ceil(message.bit_length() / 8)
     return message.to_bytes(length, 'big').decode()
 
