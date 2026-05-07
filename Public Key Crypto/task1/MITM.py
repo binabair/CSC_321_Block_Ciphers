@@ -1,106 +1,122 @@
-import json
-from base64 import b64encode
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad
-from Crypto.Random import get_random_bytes
-from Crypto.Protocol import DH
-from Crypto.Random import random
 from Crypto.Hash import SHA256
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+from Crypto.Random import random
 
 iv = get_random_bytes(16)
 
-def xor(one : bytes, two : bytes) -> bytes:
-    one_xor_two = bytearray(a ^ b for (a, b) in zip(one, two))
-    return one_xor_two
+def xor(one: bytes, two: bytes) -> bytes:
+    return bytes(a ^ b for (a, b) in zip(one, two))
+
+def int_to_bytes(n: int) -> bytes:
+    return n.to_bytes((n.bit_length() + 7) // 8 or 1, "big")
+
+def make_key(s: int) -> bytes:
+    return SHA256.new(int_to_bytes(s)).digest()[:16]
 
 class Person:
-    q : int
-    alpha : int
-    x : int
+    q: int
+    alpha: int
+    x: int
     y: int
     s: int
-    k: int
-
+    k: bytes
 
     def generateX(self):
-        self.x = random.randint(1,self.q)
+        self.x = random.randint(1, self.q - 1)
 
-    def send_q_a(self, bob):
-        bob.receive_q_a(self.q, self.alpha)
-        self.generateX()
-
-    def receive_q_a(self, q, a):
-        self.q = q
-        self.alpha = a
-        self.generateX()
-
-    def computes_Y(self):
+    def generateY(self):
         self.y = pow(self.alpha, self.x, self.q)
-        
-    def intercept_Y(self, person ):
-        person.y = person.q
 
-    def receive_Y(self, person):
-        self.s = pow(self.y, self.x, self.q)
-        self.k = SHA256.new(bytes(self.s)).digest()
+    def receive_q_a(self, q, alpha):
+        self.q = q
+        self.alpha = alpha
+        self.generateX()
+        self.generateY()
+
+    def compute_shared_secret(self, other_y):
+        self.s = pow(other_y, self.x, self.q)
+        self.k = make_key(self.s)
         self.cipher = AES.new(self.k, AES.MODE_ECB)
-        
 
     def cbcEncrypt(self, message: bytes):
         vector = iv
         message = pad(message, AES.block_size)
-        blocks = len(message) // AES.block_size
         cipherMessage = bytearray()
-        for i in range(0, blocks):
-            lowerBound = i * AES.block_size
-            upperbound = lowerBound + AES.block_size
-            block = message[lowerBound: upperbound]
-            input = xor(block, vector)
-            cipherBlock = self.cipher.encrypt(input)
+
+        for i in range(0, len(message), AES.block_size):
+            block = message[i:i + AES.block_size]
+            xored = xor(block, vector)
+            cipherBlock = self.cipher.encrypt(xored)
             cipherMessage.extend(cipherBlock)
             vector = cipherBlock
-        return cipherMessage
 
-    def cbcDecrypt(self, encryption):
+        return bytes(cipherMessage)
+
+    def cbcDecrypt(self, encryption: bytes):
         vector = iv
-        blocks = len(encryption) // AES.block_size
         message = bytearray()
-        for i in range(blocks):
-            lowerBound = i * AES.block_size
-            upperbound = lowerBound + AES.block_size
-            cipheredBlock = encryption[lowerBound: upperbound]
+
+        for i in range(0, len(encryption), AES.block_size):
+            cipheredBlock = encryption[i:i + AES.block_size]
             partiallyDecryptedBlock = self.cipher.decrypt(cipheredBlock)
             decryptedBlock = xor(partiallyDecryptedBlock, vector)
             message.extend(decryptedBlock)
             vector = cipheredBlock
-        return message
 
+        return unpad(bytes(message), AES.block_size)
+
+# Task 2 MITM Attack
 
 Alice = Person()
 Bob = Person()
 Mallory = Person()
-Alice.q = 37
-Alice.alpha = 5
-Alice.send_q_a(Bob)
-Bob.send_q_a(Alice)
 
-Alice.computes_Y()
-Bob.computes_Y()
+q = 37
+alpha = 5
 
-Mallory.intercept_Y(Bob)
-Mallory.intercept_Y(Alice)
+Alice.receive_q_a(q, alpha)
+Bob.receive_q_a(q, alpha)
 
-Alice.receive_Y(Bob)
-Bob.receive_Y(Alice)
+YA = Alice.y
+YB = Bob.y
+
+print("Original Alice public value YA:", YA)
+print("Original Bob public value YB:", YB)
+
+fake_value = q
+
+Alice.compute_shared_secret(fake_value)
+Bob.compute_shared_secret(fake_value)
+
+print("Alice shared secret:", Alice.s)
+print("Bob shared secret:", Bob.s)
+
+Mallory.s = 0
+Mallory.k = make_key(Mallory.s)
+Mallory.cipher = AES.new(Mallory.k, AES.MODE_ECB)
+
+print("Mallory shared secret:", Mallory.s)
+
+print("Alice key:", Alice.k.hex())
+print("Bob key:", Bob.k.hex())
+print("Mallory key:", Mallory.k.hex())
 
 alices_message = "Hi Bob!"
 alices_encrypted_message = Alice.cbcEncrypt(alices_message.encode())
+
 alices_decrypted_message = Bob.cbcDecrypt(alices_encrypted_message).decode()
-print("Bob received: " + alices_decrypted_message)
+print("Bob received:", alices_decrypted_message)
+
+mallory_decrypts_alice = Mallory.cbcDecrypt(alices_encrypted_message).decode()
+print("Mallory decrypted Alice's message:", mallory_decrypts_alice)
 
 bobs_message = "Hi Alice!"
 bobs_encrypted_message = Bob.cbcEncrypt(bobs_message.encode())
-bobs_decrypted_message =Alice.cbcDecrypt(bobs_encrypted_message).decode()
-print("Alice received: " + bobs_decrypted_message)
 
+bobs_decrypted_message = Alice.cbcDecrypt(bobs_encrypted_message).decode()
+print("Alice received:", bobs_decrypted_message)
 
+mallory_decrypts_bob = Mallory.cbcDecrypt(bobs_encrypted_message).decode()
+print("Mallory decrypted Bob's message:", mallory_decrypts_bob)
