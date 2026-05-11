@@ -57,7 +57,7 @@ for bits in range(8, 52, 2):
     result = find_collision(bits)
 
     print(
-        bits, " : bits\n",
-        result["inputs"], " : inputs\n",
-        round(result["time"], 4), " : seconds"
+        bits, ": bits\n",
+        result["inputs"], ": inputs before collision\n",
+        round(result["time"], 4), ": seconds\n"
     )
