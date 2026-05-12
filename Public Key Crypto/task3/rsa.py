@@ -6,6 +6,8 @@ import math
 import Crypto.Random
 import Crypto.Util as util
 
+
+
 def mod_inverse(a, n):
     t, newt = 0, 1
     r, newr = n, a
@@ -23,7 +25,7 @@ def mod_inverse(a, n):
 
     return t
 
-#Feel free to use your cryptographic library’s interface for generating large primes,
+# Feel free to use your cryptographic library’s interface for generating large primes,
 # but implement the rest-including computing the multiplicative inverse - yourself.
 
 e = 65537
@@ -45,47 +47,48 @@ def decrypt(encrpyted_message : int):
     length = math.ceil(message.bit_length() / 8)
     return message.to_bytes(length, 'big').decode()
 
-class Person:
-    n : int
-    e : int
-    d : int
-    s : int
-    k : int
+def sign(message : str):
+    message = int.from_bytes(message.encode(), byteorder='big')
+    signature = pow(message, d, n)
+    return signature
 
-    def __str__(self):
-        return ("q:" + str(self.q) + "\n"
-                + "alpha:" + str(self.alpha) + "\n"
-                + "x:" + str(self.x) + "\n"
-                + "y:" + str(self.y) + "\n"
-                + "other y:" + str(self.yOther) + "\n"
-                + "s:" + str(self.s)
-                + "k:" + str(self.k))
+def unsign(signature : int):
+    message = pow(signature, e, n)
 
+    return message
 
-    def generateY(self):
-        self.y = pow(self.alpha, self.x, self.q)
-
-    def send_n_e(self, bob : Person):
-        bob.receive_q_a(self.q, self.alpha)
-        self.generateX()
-        self.generateY()
-
-    def receive_n_e(self, n, e):
-        self.n = n
-        self.e = e
-        self.generateX()
-        self.generateY()
+def str_to_int(message : str):
+    return int.from_bytes(message.encode(), byteorder='big')
 
 
 
-alice = Person()
-bob = Person()
-alice.e = e
+alice_n = n
+alice_e = e
+bob_n = n
+bob_e = e
+bob_c = encrypt("This is bob and alice's key") # never makes it to alice
+mallory_c = encrypt("This is the key!!") # mallory can encrpyt since the info for this is public
+alice_k = decrypt(mallory_c)
+print("Alice's key: " + str(alice_k))
+mallory_k = "This is the key!!"
+print("Mallory key: " + str(mallory_k))
+if alice_k == mallory_k:
+    print("Mallory successfully has gotten the same key as Alice")
+else:
+    print("Mallory failed to have the same key as Alice")
 
 
 
-message = "hello world"
-encrypted_message = encrypt(message)
-print("Encrypted message: " + str(encrypted_message))
-decrypted_message = decrypt(encrypted_message)
-print("Decrypted message: " + decrypted_message)
+alice_signature_1 = sign("message 1")
+message_1 = str_to_int("message 1")
+alice_signature_2 = sign("message 2")
+message_2 = str_to_int("message 2")
+message_3 = (message_1 * message_2) % n
+signature_3 = (alice_signature_1 * alice_signature_2) % n
+if unsign(signature_3) == message_3:
+    print("Mallory successfully has created the signature for message 3")
+else:
+    print("Mallory failed to have created the signature for message 3")
+
+
+
